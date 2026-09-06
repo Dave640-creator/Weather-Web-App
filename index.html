@@ -1,45 +1,317 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Simple API</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            padding: 20px;
+        }
+
+        .weather-app {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .search {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        button {
+            border: none;
+            padding: 12px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            background: white;
+            color: #168eea;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #eee;
+        }
+
+        .weather-icon {
+            font-size: 70px;
+            margin: 15px 0;
+        }
+
+        .temperature {
+            font-size: 55px;
+            font-weight: bold;
+        }
+
+        .description {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        .details {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 25px;
+        }
+
+        .detail {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .error {
+            color: #fff;
+            margin-top: 15px;
+        }
+    </style>
 </head>
+
 <body>
 
-<h1>My Simple API</h1>
+<div class="weather-app">
+
+    <h1>🌤️ Weather App</h1>
+
+    <div class="search">
+        <input
+            type="text"
+            id="cityInput"
+            placeholder="Enter city..."
+            value="Manila"
+        >
+
+        <button onclick="getWeather()">
+            Search
+        </button>
+    </div>
+
+    <div id="weather">
+
+        <div class="weather-icon">🌤️</div>
+
+        <h2 id="city">Manila</h2>
+
+        <div class="temperature" id="temperature">
+            --°C
+        </div>
+
+        <div class="description" id="description">
+            Loading...
+        </div>
+
+        <div class="details">
+
+            <div class="detail">
+                <span>💧</span>
+                <span id="humidity">--%</span>
+                <small>Humidity</small>
+            </div>
+
+            <div class="detail">
+                <span>💨</span>
+                <span id="wind">-- km/h</span>
+                <small>Wind</small>
+            </div>
+
+        </div>
+
+    </div>
+
+    <p class="error" id="error"></p>
+
+</div>
 
 <script>
-const api = {
-    products: [
-        {
-            id: 1,
-            name: "Classic Milk Tea",
-            price: 99
-        },
-        {
-            id: 2,
-            name: "Brown Sugar Milk Tea",
-            price: 129
-        },
-        {
-            id: 3,
-            name: "Taro Milk Tea",
-            price: 109
+
+async function getWeather() {
+
+    const city = document
+        .getElementById("cityInput")
+        .value.trim();
+
+    const error = document.getElementById("error");
+
+    error.textContent = "";
+
+    if (!city) {
+        error.textContent = "Please enter a city.";
+        return;
+    }
+
+    try {
+
+        // Get city coordinates
+        const geoResponse = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
+        );
+
+        const geoData = await geoResponse.json();
+
+        if (!geoData.results || geoData.results.length === 0) {
+            throw new Error("City not found.");
         }
-    ]
-};
 
-// Get all products
-function getProducts() {
-    return api.products;
+        const location = geoData.results[0];
+
+        const latitude = location.latitude;
+        const longitude = location.longitude;
+
+        // Get weather
+        const weatherResponse = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`
+        );
+
+        const weatherData = await weatherResponse.json();
+
+        const current = weatherData.current;
+
+        // Display city
+        document.getElementById("city").textContent =
+            `${location.name}, ${location.country}`;
+
+        // Temperature
+        document.getElementById("temperature").textContent =
+            `${Math.round(current.temperature_2m)}°C`;
+
+        // Humidity
+        document.getElementById("humidity").textContent =
+            `${current.relative_humidity_2m}%`;
+
+        // Wind
+        document.getElementById("wind").textContent =
+            `${Math.round(current.wind_speed_10m)} km/h`;
+
+        // Weather description
+        const weather = getWeatherDescription(
+            current.weather_code
+        );
+
+        document.getElementById("description").textContent =
+            weather.text;
+
+        document.querySelector(".weather-icon").textContent =
+            weather.icon;
+
+    } catch (err) {
+
+        error.textContent =
+            "Unable to get weather data. Please try again.";
+
+        console.error(err);
+    }
 }
 
-// Get product by ID
-function getProduct(id) {
-    return api.products.find(product => product.id === id);
+
+// Convert weather code to description
+function getWeatherDescription(code) {
+
+    if (code === 0) {
+        return {
+            text: "Clear Sky",
+            icon: "☀️"
+        };
+    }
+
+    if (code === 1 || code === 2) {
+        return {
+            text: "Partly Cloudy",
+            icon: "🌤️"
+        };
+    }
+
+    if (code === 3) {
+        return {
+            text: "Cloudy",
+            icon: "☁️"
+        };
+    }
+
+    if (code >= 45 && code <= 48) {
+        return {
+            text: "Foggy",
+            icon: "🌫️"
+        };
+    }
+
+    if (code >= 51 && code <= 57) {
+        return {
+            text: "Drizzle",
+            icon: "🌦️"
+        };
+    }
+
+    if (code >= 61 && code <= 67) {
+        return {
+            text: "Rain",
+            icon: "🌧️"
+        };
+    }
+
+    if (code >= 71 && code <= 77) {
+        return {
+            text: "Snow",
+            icon: "❄️"
+        };
+    }
+
+    if (code >= 80 && code <= 82) {
+        return {
+            text: "Rain Showers",
+            icon: "🌦️"
+        };
+    }
+
+    if (code >= 95) {
+        return {
+            text: "Thunderstorm",
+            icon: "⛈️"
+        };
+    }
+
+    return {
+        text: "Unknown Weather",
+        icon: "🌤️"
+    };
 }
 
-console.log("All Products:", getProducts());
-console.log("Product 1:", getProduct(1));
+
+// Load weather automatically
+getWeather();
+
 </script>
 
 </body>
