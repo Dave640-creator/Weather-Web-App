@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple API</title>
+</head>
+<body>
+
+<h1>My Simple API</h1>
+
+<script>
+const api = {
+    products: [
+        {
+            id: 1,
+            name: "Classic Milk Tea",
+            price: 99
+        },
+        {
+            id: 2,
+            name: "Brown Sugar Milk Tea",
+            price: 129
+        },
+        {
+            id: 3,
+            name: "Taro Milk Tea",
+            price: 109
+        }
+    ]
+};
+
+// Get all products
+function getProducts() {
+    return api.products;
+}
+
+// Get product by ID
+function getProduct(id) {
+    return api.products.find(product => product.id === id);
+}
+
+console.log("All Products:", getProducts());
+console.log("Product 1:", getProduct(1));
+</script>
+
+</body>
+</html>
