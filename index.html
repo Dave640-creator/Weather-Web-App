@@ -207,6 +207,9 @@ footer{padding:28px 3px 0;color:var(--muted);font-size:10px;text-align:center}
   .bottom-grid{display:block}
   .map-card{margin-bottom:18px}
 }
+
+/* ATMOS 2.0 */
+.score-card{grid-column:span 2;padding:22px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}.score-ring{width:108px;height:108px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) 0deg,var(--accent2) 300deg,rgba(255,255,255,.08) 300deg);position:relative}.score-ring:before{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--bg2)}.score-number{position:relative;font:600 31px "Space Grotesk"}.score-copy h3{margin:0;font:600 18px "Space Grotesk"}.score-copy p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.5}.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.insight{padding:20px}.insight .big{font:600 22px "Space Grotesk";margin:8px 0}.eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent2)}.sun-card{padding:22px}.sun-track{height:115px;position:relative;margin:10px 8px 0}.sun-arc{position:absolute;left:7%;right:7%;top:15px;height:100px;border:2px dashed rgba(255,255,255,.13);border-bottom:0;border-radius:150px 150px 0 0}.sun{position:absolute;width:14px;height:14px;border-radius:50%;background:#ffc66d;box-shadow:0 0 28px #ffc66d;top:58px;transform:translateX(-50%)}.sun-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}.rain-track{display:flex;gap:5px;align-items:end;height:75px;margin-top:15px}.rain-col{flex:1;text-align:center}.rain-bar{height:calc(var(--rain)*.55px + 4px);max-height:58px;border-radius:5px 5px 2px 2px;background:linear-gradient(var(--accent2),var(--accent));margin-bottom:5px}.rain-col span{font-size:9px;color:var(--muted)}.notice{padding:12px 15px;border:1px solid rgba(255,173,102,.25);background:rgba(255,173,102,.06);border-radius:15px;color:var(--warning);font-size:12px;line-height:1.45;margin-top:12px}@media(max-width:700px){.score-card{grid-column:span 2}.insight-grid{grid-template-columns:1fr 1fr}.rain-track{gap:3px}}
 </style>
 </head>
 <body>
@@ -300,6 +303,17 @@ footer{padding:28px 3px 0;color:var(--muted);font-size:10px;text-align:center}
     </div>
   </section>
 
+
+  <div class="section-title"><h2>Today's intelligence</h2><span>Atmos calculated insights</span></div>
+  <section class="insight-grid">
+    <article class="card score-card"><div class="score-ring"><div class="score-number" id="score">—</div></div><div class="score-copy"><div class="eyebrow">Atmos score</div><h3 id="scoreTitle">Outdoor conditions</h3><p id="scoreText">Evaluating the forecast…</p></div></article>
+    <article class="card insight"><div class="eyebrow">Best time today</div><div class="big" id="bestTime">—</div><div class="stat-sub" id="bestReason">Finding a good window.</div></article>
+    <article class="card insight"><div class="eyebrow">Daylight</div><div class="big" id="daylight">—</div><div class="stat-sub" id="sunTimes">—</div></article>
+  </section>
+  <div class="section-title"><h2>Sun path</h2><span>Daylight arc</span></div>
+  <article class="card sun-card"><div class="sun-track"><div class="sun-arc"></div><div class="sun" id="sunDot"></div></div><div class="sun-label"><span>🌅 <b id="sunrise">—</b></span><span>☀️ Daylight</span><span>🌇 <b id="sunset">—</b></span></div></article>
+  <div class="section-title"><h2>Rain timeline</h2><span>Next 12 hours</span></div>
+  <article class="card" style="padding:20px"><div class="rain-track" id="rainTimeline"></div></article>
   <div class="section-title"><h2>24-hour temperature</h2><span>Next hours</span></div>
   <article class="card chart-card"><div class="chart-wrap"><canvas id="tempChart"></canvas></div></article>
 
@@ -431,6 +445,18 @@ async function loadPlace(place, save=true){
   finally{showLoading(false)}
 }
 
+
+function renderIntelligence(d){
+ const c=d.current,h=d.hourly,dy=d.daily,now=new Date();
+ const idx=Math.max(0,h.time.findIndex(t=>new Date(t)>=now));
+ const rain=h.precipitation_probability.slice(idx,idx+12), temps=h.temperature_2m.slice(idx,idx+12), uvs=h.uv_index.slice(idx,idx+12);
+ let score=100; if(c.temperature_2m>32)score-=18; else if(c.temperature_2m>29)score-=8; if(c.temperature_2m<18)score-=12; score-=Math.min(30,(rain[0]||0)*.35); score-=Math.min(15,Math.max(0,(uvs[0]||0)-5)*2.5); score-=Math.min(12,c.wind_speed_10m/5); if(c.visibility<5000)score-=10; score=Math.max(0,Math.min(100,Math.round(score)));
+ $("score").textContent=score; $("scoreTitle").textContent=score>=85?"Excellent outdoor conditions":score>=70?"Good outdoor conditions":score>=50?"Mixed conditions":"Plan around the weather"; $("scoreText").textContent=score>=85?"A strong window for outdoor plans.":score>=70?"Mostly favorable conditions with minor limits.":score>=50?"Outdoor plans are possible; check rain and heat.":"Conditions may be uncomfortable for long outdoor plans.";
+ let best=0,bv=Infinity; temps.forEach((t,i)=>{let v=Math.abs(t-26)+(rain[i]||0)*.18+(uvs[i]||0)*.5;if(v<bv){bv=v;best=i}}); $("bestTime").textContent=h.time[idx+best]?fmtTime(h.time[idx+best]):"—"; $("bestReason").textContent="Lowest combined heat, rain, UV and wind impact.";
+ const rise=new Date(dy.sunrise[0]),set=new Date(dy.sunset[0]),mins=Math.max(0,Math.round((set-rise)/60000)); $("daylight").textContent=`${Math.floor(mins/60)}h ${mins%60}m`; $("sunrise").textContent=new Intl.DateTimeFormat([], {hour:"numeric",minute:"2-digit",timeZone:d.timezone}).format(rise); $("sunset").textContent=new Intl.DateTimeFormat([], {hour:"numeric",minute:"2-digit",timeZone:d.timezone}).format(set); $("sunTimes").textContent=`Sunrise ${$("sunrise").textContent} · Sunset ${$("sunset").textContent}`; let pos=Math.min(1,Math.max(0,(Date.now()-rise)/(set-rise))); $("sunDot").style.left=(7+pos*86)+"%";
+ $("rainTimeline").innerHTML=rain.map((v,i)=>`<div class="rain-col"><div class="rain-bar" style="--rain:${Math.round(v)}"></div><span>${Math.round(v)}%</span><span>${new Date(h.time[idx+i]).toLocaleTimeString([], {hour:"numeric"})}</span></div>`).join("");
+}
+
 function render(){
   const d=state.data,c=d.current,h=d.hourly,dy=d.daily;
   const w=weatherMap[c.weather_code]||["🌡️","Unknown"];
@@ -456,6 +482,7 @@ function render(){
   $("updated").textContent="LIVE · "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
   $("advice").innerHTML=`<b>${advice(c,rain,uv)}</b>`;
   renderForecast(dy);
+  renderIntelligence(d);
   renderChart(h);
   renderAir();
   renderParticles(c.weather_code);
