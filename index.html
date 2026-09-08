@@ -210,11 +210,29 @@ footer{padding:28px 3px 0;color:var(--muted);font-size:10px;text-align:center}
 
 /* ATMOS 2.0 */
 .score-card{grid-column:span 2;padding:22px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}.score-ring{width:108px;height:108px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) 0deg,var(--accent2) 300deg,rgba(255,255,255,.08) 300deg);position:relative}.score-ring:before{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--bg2)}.score-number{position:relative;font:600 31px "Space Grotesk"}.score-copy h3{margin:0;font:600 18px "Space Grotesk"}.score-copy p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.5}.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.insight{padding:20px}.insight .big{font:600 22px "Space Grotesk";margin:8px 0}.eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent2)}.sun-card{padding:22px}.sun-track{height:115px;position:relative;margin:10px 8px 0}.sun-arc{position:absolute;left:7%;right:7%;top:15px;height:100px;border:2px dashed rgba(255,255,255,.13);border-bottom:0;border-radius:150px 150px 0 0}.sun{position:absolute;width:14px;height:14px;border-radius:50%;background:#ffc66d;box-shadow:0 0 28px #ffc66d;top:58px;transform:translateX(-50%)}.sun-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}.rain-track{display:flex;gap:5px;align-items:end;height:75px;margin-top:15px}.rain-col{flex:1;text-align:center}.rain-bar{height:calc(var(--rain)*.55px + 4px);max-height:58px;border-radius:5px 5px 2px 2px;background:linear-gradient(var(--accent2),var(--accent));margin-bottom:5px}.rain-col span{font-size:9px;color:var(--muted)}.notice{padding:12px 15px;border:1px solid rgba(255,173,102,.25);background:rgba(255,173,102,.06);border-radius:15px;color:var(--warning);font-size:12px;line-height:1.45;margin-top:12px}@media(max-width:700px){.score-card{grid-column:span 2}.insight-grid{grid-template-columns:1fr 1fr}.rain-track{gap:3px}}
+
+/* ATMOS 2.1 visual identity */
+.atmos-scene{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden;transition:.8s}
+.scene-orb{position:absolute;width:42vw;height:42vw;max-width:620px;max-height:620px;border-radius:50%;right:-13vw;top:-18vw;opacity:.25;filter:blur(3px);background:radial-gradient(circle,rgba(255,202,105,.9),rgba(255,145,80,.15) 42%,transparent 70%);transition:.8s;animation:floatOrb 10s ease-in-out infinite}
+.scene-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 110%,rgba(99,234,208,.07),transparent 40%)}
+.scene-moon{position:absolute;width:120px;height:120px;border-radius:50%;right:10%;top:8%;opacity:0;background:radial-gradient(circle at 35% 35%,#fff,#b9c8ff 45%,#8292cf 70%,transparent 72%);box-shadow:0 0 70px rgba(170,190,255,.28);transition:.8s}
+.scene-rain .scene-orb{background:radial-gradient(circle,rgba(110,150,210,.35),transparent 65%);opacity:.18}
+.scene-cloud .scene-orb{background:radial-gradient(circle,rgba(170,185,210,.25),transparent 65%);opacity:.18}
+.scene-storm .scene-orb{background:radial-gradient(circle,rgba(110,90,190,.3),transparent 65%);opacity:.18}
+.scene-night .scene-orb{opacity:0}.scene-night .scene-moon{opacity:.9}
+.weather-emoji{font-size:78px;line-height:1;filter:drop-shadow(0 14px 25px rgba(0,0,0,.28));transition:.5s}
+.weather-emoji:hover{transform:translateY(-5px) rotate(-2deg)}
+.compare-card{padding:22px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;text-align:center}
+.compare-col{padding:5px 20px}.compare-icon{font-size:38px;margin:12px 0}.compare-temp{font:600 30px "Space Grotesk"}.compare-divider{font:600 10px "Space Grotesk";letter-spacing:2px;color:var(--muted)}
+.trend-up{color:var(--hot)}.trend-down{color:var(--accent2)}.trend-stable{color:var(--muted)}
+@keyframes floatOrb{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,14px)}}
+@media(max-width:700px){.compare-card{padding:16px}.compare-col{padding:4px 8px}.compare-icon{font-size:32px}.compare-temp{font-size:25px}.scene-moon{width:80px;height:80px}}
 </style>
 </head>
 <body>
 
 <div class="weather-particles" id="particles"></div>
+<div class="atmos-scene" id="atmosScene" aria-hidden="true"><div class="scene-orb"></div><div class="scene-glow"></div><div class="scene-moon"></div></div>
 <div class="loading" id="loading">
   <div class="loader-box"><div class="spinner"></div><p>Reading the atmosphere…</p></div>
 </div>
@@ -310,6 +328,18 @@ footer{padding:28px 3px 0;color:var(--muted);font-size:10px;text-align:center}
     <article class="card insight"><div class="eyebrow">Best time today</div><div class="big" id="bestTime">—</div><div class="stat-sub" id="bestReason">Finding a good window.</div></article>
     <article class="card insight"><div class="eyebrow">Daylight</div><div class="big" id="daylight">—</div><div class="stat-sub" id="sunTimes">—</div></article>
   </section>
+  <div class="section-title"><h2>Weather trends</h2><span>Direction of change</span></div>
+  <section class="insight-grid">
+    <article class="card insight"><div class="eyebrow">Temperature</div><div class="big" id="trendTemp">—</div><div class="stat-sub" id="trendTempText">—</div></article>
+    <article class="card insight"><div class="eyebrow">Rain</div><div class="big" id="trendRain">—</div><div class="stat-sub" id="trendRainText">—</div></article>
+  </section>
+  <div class="section-title"><h2>Today vs tomorrow</h2><span>Quick comparison</span></div>
+  <section class="card compare-card">
+    <div class="compare-col"><div class="eyebrow">Today</div><div class="compare-icon" id="todayIcon">—</div><div class="compare-temp" id="todayTemp">—</div><div class="stat-sub" id="todayRain">—</div></div>
+    <div class="compare-divider">VS</div>
+    <div class="compare-col"><div class="eyebrow">Tomorrow</div><div class="compare-icon" id="tomorrowIcon">—</div><div class="compare-temp" id="tomorrowTemp">—</div><div class="stat-sub" id="tomorrowRain">—</div></div>
+  </section>
+
   <div class="section-title"><h2>Sun path</h2><span>Daylight arc</span></div>
   <article class="card sun-card"><div class="sun-track"><div class="sun-arc"></div><div class="sun" id="sunDot"></div></div><div class="sun-label"><span>🌅 <b id="sunrise">—</b></span><span>☀️ Daylight</span><span>🌇 <b id="sunset">—</b></span></div></article>
   <div class="section-title"><h2>Rain timeline</h2><span>Next 12 hours</span></div>
@@ -365,15 +395,12 @@ const state = {
 };
 
 const weatherMap = {
-  0:["☀️","Clear sky"], 1:["🌤️","Mainly clear"], 2:["⛅","Partly cloudy"], 3:["☁️","Overcast"],
-  45:["🌫️","Fog"], 48:["🌫️","Rime fog"], 51:["🌦️","Light drizzle"], 53:["🌦️","Drizzle"],
-  55:["🌧️","Heavy drizzle"], 56:["🌧️","Freezing drizzle"], 57:["🌧️","Freezing drizzle"],
-  61:["🌦️","Light rain"], 63:["🌧️","Rain"], 65:["🌧️","Heavy rain"],
-  66:["🌧️","Freezing rain"], 67:["🌧️","Heavy freezing rain"], 71:["🌨️","Light snow"],
-  73:["🌨️","Snow"], 75:["❄️","Heavy snow"], 77:["❄️","Snow grains"],
-  80:["🌦️","Rain showers"], 81:["🌧️","Rain showers"], 82:["⛈️","Heavy showers"],
-  85:["🌨️","Snow showers"], 86:["❄️","Heavy snow showers"], 95:["⛈️","Thunderstorm"],
-  96:["⛈️","Thunderstorm + hail"], 99:["⛈️","Thunderstorm + hail"]
+  0:["◉","Clear sky"],1:["◔","Mainly clear"],2:["◒","Partly cloudy"],3:["●","Overcast"],
+  45:["≋","Fog"],48:["≋","Rime fog"],51:["◌","Light drizzle"],53:["◌","Drizzle"],55:["╱","Heavy drizzle"],
+  56:["╱","Freezing drizzle"],57:["╱","Freezing drizzle"],61:["◒","Light rain"],63:["╱","Rain"],65:["╱","Heavy rain"],
+  66:["╱","Freezing rain"],67:["╱","Heavy freezing rain"],71:["✧","Light snow"],73:["✧","Snow"],75:["✦","Heavy snow"],
+  77:["✧","Snow grains"],80:["◒","Rain showers"],81:["╱","Rain showers"],82:["ϟ","Heavy showers"],85:["✧","Snow showers"],
+  86:["✦","Heavy snow showers"],95:["ϟ","Thunderstorm"],96:["ϟ","Thunderstorm + hail"],99:["ϟ","Thunderstorm + hail"]
 };
 
 function cToF(c){return c * 9/5 + 32}
@@ -457,6 +484,22 @@ function renderIntelligence(d){
  $("rainTimeline").innerHTML=rain.map((v,i)=>`<div class="rain-col"><div class="rain-bar" style="--rain:${Math.round(v)}"></div><span>${Math.round(v)}%</span><span>${new Date(h.time[idx+i]).toLocaleTimeString([], {hour:"numeric"})}</span></div>`).join("");
 }
 
+function setScene(code){
+ const s=document.getElementById("atmosScene"); s.className="atmos-scene";
+ if(code>=95)s.classList.add("scene-storm"); else if((code>=51&&code<=67)||(code>=80&&code<=82))s.classList.add("scene-rain"); else if(code>=1&&code<=3)s.classList.add("scene-cloud");
+ const hour=new Date().getHours(); if(hour<6||hour>=19)s.classList.add("scene-night");
+}
+function renderTrends(d){
+ const h=d.hourly,now=new Date(),idx=Math.max(0,h.time.findIndex(t=>new Date(t)>=now));
+ const t0=h.temperature_2m[idx]??d.current.temperature_2m,t3=h.temperature_2m[Math.min(idx+3,h.temperature_2m.length-1)]??t0;
+ const r0=h.precipitation_probability[idx]??0,r3=h.precipitation_probability[Math.min(idx+3,h.precipitation_probability.length-1)]??r0;
+ const tempUp=t3-t0; document.getElementById("trendTemp").textContent=(Math.abs(tempUp)<1?"→ Stable":tempUp>0?"↗ Rising":"↘ Falling"); document.getElementById("trendTemp").className="big "+(Math.abs(tempUp)<1?"trend-stable":tempUp>0?"trend-up":"trend-down"); document.getElementById("trendTempText").textContent=`${Math.abs(Math.round(tempUp))}° change over the next few hours`;
+ const rainUp=r3-r0; document.getElementById("trendRain").textContent=(Math.abs(rainUp)<10?"→ Stable":rainUp>0?"↗ Rising":"↘ Falling"); document.getElementById("trendRain").className="big "+(Math.abs(rainUp)<10?"trend-stable":rainUp>0?"trend-up":"trend-down"); document.getElementById("trendRainText").textContent=`Rain chance moves from ${Math.round(r0)}% to ${Math.round(r3)}%`;
+ const a=weatherMap[d.daily.weather_code[0]]||["◉",""]; const b=weatherMap[d.daily.weather_code[1]]||["◉",""];
+ document.getElementById("todayIcon").textContent=a[0]; document.getElementById("tomorrowIcon").textContent=b[0];
+ document.getElementById("todayTemp").textContent=`${temp(d.daily.temperature_2m_max[0])}° / ${temp(d.daily.temperature_2m_min[0])}°`; document.getElementById("tomorrowTemp").textContent=`${temp(d.daily.temperature_2m_max[1])}° / ${temp(d.daily.temperature_2m_min[1])}°`;
+ document.getElementById("todayRain").textContent=`☂ ${d.daily.precipitation_probability_max[0]??0}% rain chance`; document.getElementById("tomorrowRain").textContent=`☂ ${d.daily.precipitation_probability_max[1]??0}% rain chance`;
+}
 function render(){
   const d=state.data,c=d.current,h=d.hourly,dy=d.daily;
   const w=weatherMap[c.weather_code]||["🌡️","Unknown"];
@@ -483,6 +526,8 @@ function render(){
   $("advice").innerHTML=`<b>${advice(c,rain,uv)}</b>`;
   renderForecast(dy);
   renderIntelligence(d);
+  renderTrends(d);
+  setScene(c.weather_code);
   renderChart(h);
   renderAir();
   renderParticles(c.weather_code);
